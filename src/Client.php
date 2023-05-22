@@ -400,6 +400,42 @@ class Client {
     return $result;
   }
 
+  public function Webhsop(array $request, string $encoding = 'UTF-8') {
+
+    $this->_lastRequest = [];
+    $this->_lastResponse = [];
+
+    $request['consignor']['id'] = $this->_consignorId;
+    $request['consignor']['key'] = $this->_consignorKey;
+
+    if (empty($request['consignor']['api_version'])) {
+      $request['consignor']['api_version'] = '4.5';
+    }
+
+    $request = $this->_arrayToXml($request, 'integration', $encoding);
+
+    if ($this->_testMode) {
+      $url = self::SERVER_TEST.'/webshops/create_xml';
+    } else {
+      $url = self::SERVER_PRODUCTION.'/webshops/create_xml';
+    }
+
+    $headers = ['Content-Type' => 'application/x-www-form-urlencoded'];
+
+    $request = http_build_query([
+      'xml' => $request,
+      'md5_checksum' => md5($request)
+    ], '', '&');
+
+    $result = $this->_call('POST', $url, $request, $headers);
+
+    if (empty($result['integration'])) {
+      throw new \Exception('Missing integration in result');
+    }
+
+    return $result;
+  }
+
   public function ConvertLength($value, $from, $to) {
 
     $units = [
